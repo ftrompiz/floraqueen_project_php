@@ -97,7 +97,6 @@ class VoucherS extends Voucher
     }
     public function getDiscount(Cart $cart):float
     {
-        echo "total: $cart->total \n";
         if ($cart->total > 40){
             return ($cart->total)*(.05);
         }
@@ -138,7 +137,6 @@ class Cart{
                  * @var Product $element
                  */
                 $pr = $element->getPrice();
-                echo "Precio: " . $pr . " \n";
                 $this->total += $pr;
             } elseif ($element instanceof Voucher){
                 if ($element->apply_at_end){
@@ -157,7 +155,6 @@ class Cart{
                  * @var Voucher $element
                  */
                 $dis = $element->getDiscount($this);
-                echo "Discount: ".$dis." \n";
                 $this->total -= $dis;
             }
         }
@@ -196,10 +193,9 @@ class case1 {
 
         foreach ($this->list as $item)
         {
-            echo "Agregando un elemento al carrito \n";
-            print_r($item);
+            echo "Agregando un elemento al carrito: ".get_class($item).PHP_EOL;
             $cart->addElement($item);
-            echo "Total en el carrito: ".$cart->total." \n";
+            echo "Total en el carrito: ".$cart->total.PHP_EOL;
         }
 
     }
@@ -230,15 +226,20 @@ class case2 {
 
         foreach ($this->list as $item)
         {
-            echo "Agregando un elemento al carrito \n";
-            print_r($item);
+            echo "Agregando un elemento al carrito: ".get_class($item).PHP_EOL;
             $cart->addElement($item);
-            echo "Total en el carrito: ".$cart->total." \n";
+            echo "Total en el carrito: ".$cart->total.PHP_EOL;
         }
 
     }
 }
 
+echo "Ejecutando caso 1" . PHP_EOL;
+$case = new Case1();
+$case->execute();
+echo PHP_EOL;
+echo PHP_EOL;
+echo "Ejecutando caso 2" . PHP_EOL;
 $case = new Case2();
 $case->execute();
 
