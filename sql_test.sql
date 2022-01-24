@@ -8,56 +8,56 @@ DROP TABLE Productos;
 DROP TABLE Tiendas;
 
 CREATE TABLE Clientes(
-                         id INTEGER NOT NULL IDENTITY(1,1),
-                         nombre VARCHAR(50),
-                         apellidos VARCHAR(50),
-                         telefono VARCHAR(50),
-                         email VARCHAR(50),
-                         codigo_postal VARCHAR(50),
+    id INTEGER NOT NULL IDENTITY(1,1),
+    nombre VARCHAR(50),
+    apellidos VARCHAR(50),
+    telefono VARCHAR(50),
+    email VARCHAR(50),
+    codigo_postal VARCHAR(50),
 
-                         CONSTRAINT cliente_pk PRIMARY KEY (id)
+    CONSTRAINT cliente_pk PRIMARY KEY (id)
 );
 
 CREATE TABLE Productos(
-                          id INTEGER NOT NULL IDENTITY(1,1),
-                          nombre VARCHAR(50) NOT NULL,
-                          precio DECIMAL NOT NULL,
+    id INTEGER NOT NULL IDENTITY(1,1),
+    nombre VARCHAR(50) NOT NULL,
+    precio DECIMAL NOT NULL,
 
-                          CONSTRAINT producto_pk PRIMARY KEY (id)
+    CONSTRAINT producto_pk PRIMARY KEY (id)
 );
 
 CREATE TABLE Tiendas(
-                        id INTEGER NOT NULL IDENTITY(1,1),
-                        nombre VARCHAR(50) NOT NULL,
-                        direccion VARCHAR(200) NOT NULL,
+    id INTEGER NOT NULL IDENTITY(1,1),
+    nombre VARCHAR(50) NOT NULL,
+    direccion VARCHAR(200) NOT NULL,
 
-                        CONSTRAINT tienda_pk PRIMARY KEY (id)
+    CONSTRAINT tienda_pk PRIMARY KEY (id)
 );
 
 
 CREATE TABLE Compras(
-                        id INTEGER NOT NULL IDENTITY(1,1),
-                        cliente_id INTEGER NOT NULL,
-                        tienda_id INTEGER NOT NULL,
-                        total DECIMAL NOT NULL,
-                        fecha DATETIME,
+    id INTEGER NOT NULL IDENTITY(1,1),
+    cliente_id INTEGER NOT NULL,
+    tienda_id INTEGER NOT NULL,
+    total DECIMAL NOT NULL,
+    fecha DATETIME,
 
-                        CONSTRAINT compra_pk PRIMARY KEY (id),
-                        CONSTRAINT compra_cliente_fk FOREIGN KEY (cliente_id) REFERENCES Clientes(id),
-                        CONSTRAINT compra_tienda_fk FOREIGN KEY (tienda_id) REFERENCES Tiendas(id)
+    CONSTRAINT compra_pk PRIMARY KEY (id),
+    CONSTRAINT compra_cliente_fk FOREIGN KEY (cliente_id) REFERENCES Clientes(id),
+    CONSTRAINT compra_tienda_fk FOREIGN KEY (tienda_id) REFERENCES Tiendas(id)
 );
 
 
 CREATE TABLE CompraLineas(
-                             id INTEGER NOT NULL IDENTITY(1,1),
-                             compra_id INTEGER NOT NULL,
-                             producto_id INTEGER NOT NULL,
-                             unidades INTEGER,
-                             precio DECIMAL,
+    id INTEGER NOT NULL IDENTITY(1,1),
+    compra_id INTEGER NOT NULL,
+    producto_id INTEGER NOT NULL,
+    unidades INTEGER,
+    precio DECIMAL,
 
-                             CONSTRAINT compra_linea_pk PRIMARY KEY (id),
-                             CONSTRAINT compra_l_cliente_fk FOREIGN KEY (compra_id) REFERENCES Compras(id),
-                             CONSTRAINT compra_l_tienda_fk FOREIGN KEY (producto_id) REFERENCES Productos(id)
+    CONSTRAINT compra_linea_pk PRIMARY KEY (id),
+    CONSTRAINT compra_l_cliente_fk FOREIGN KEY (compra_id) REFERENCES Compras(id),
+    CONSTRAINT compra_l_tienda_fk FOREIGN KEY (producto_id) REFERENCES Productos(id)
 );
 
 
@@ -115,9 +115,9 @@ INSERT INTO dbo.CompraLineas( compra_id, producto_id, unidades, precio) VALUES (
 --
 A)
 SELECT DISTINCT(T.id), T.nombre, T.direccion
-FROM dbo.Tiendas T, dbo.Compras CO
-WHERE CO.tienda_id = T.id AND
-        CO.cliente_id = 1;
+FROM dbo.Tiendas T
+INNER JOIN dbo.Compras CO MERGE CO.tienda_id = T.id
+WHERE T.id = 1;
 
 B)
 SELECT CO.id, CO.total
@@ -125,6 +125,15 @@ FROM dbo.Compras CO
 WHERE DATEPART(m, CO.fecha) = DATEPART(m, DATEADD(m, -1, getdate())) AND
         DATEPART(yyyy, CO.fecha) = DATEPART(yyyy, DATEADD(m, -1, getdate())) AND
         CO.tienda_id = 1
+ORDER BY CO.total DESC
+
+-- Si se desaea obtener la inforamcion de la tienda en la query
+SELECT CO.id, CO.total
+FROM dbo.Tiendas T
+INNER JOIN dbo.Compras CO MERGE CO.tienda_id = T.id
+WHERE DATEPART(m, CO.fecha) = DATEPART(m, DATEADD(m, -1, getdate())) AND
+        DATEPART(yyyy, CO.fecha) = DATEPART(yyyy, DATEADD(m, -1, getdate())) AND
+        T.id = 1
 ORDER BY CO.total DESC
 
 C)
@@ -143,28 +152,28 @@ WITH OrderTiendasTotalCantidad AS
 
 )
 SELECT T.id, T.nombre, T.direccion, OTTC.total_ventas, OTTC.cantidad_ventas
-FROM dbo.Tiendas T, OrderTiendasTotalCantidad OTTC
-WHERE T.id = OTTC.tienda_id
+FROM dbo.Tiendas T
+INNER JOIN OrderTiendasTotalCantidad OTTC MERGE T.id = OTTC.tienda_id
 ORDER BY OTTC.total_ventas DESC, OTTC.cantidad_ventas DESC
 
 D)
 SELECT DISTINCT(T.id), T.nombre, T.direccion
 FROM dbo.Tiendas T, dbo.Compras CO, dbo.Clientes CL
-WHERE CO.tienda_id = T.id AND
-        CO.cliente_id = CL.id AND
-        CL.codigo_postal = '08023'
+INNER JOIN dbo.Compras CO MERGE CO.tienda_id = T.id
+INNER JOIN dbo.Clientes CL MERGE CO.cliente_id = CL.id
+WHERE CL.codigo_postal = '08023'
 
 E)
 WITH ProdVendTienda AS
 (
     SELECT CO.tienda_id, COL.producto_id, SUM(COL.unidades) AS cantidad,
     DENSE_RANK() OVER (PARTITION BY CO.tienda_id ORDER BY SUM(COL.unidades) DESC) AS Rank
-    FROM dbo.Compras CO, dbo.CompraLineas COL
-    WHERE COL.compra_id = CO.id
+    FROM dbo.Compras CO,
+    INNER JOIN dbo.CompraLineas COL MERGE COL.compra_id = CO.i
     GROUP BY COL.producto_id, CO.tienda_id
 )
 
 SELECT T.id, T.nombre, T.direccion, PVT.producto_id, PVT.cantidad
-FROM dbo.Tiendas T, ProdVendTienda PVT
-WHERE PVT.tienda_id = T.id AND
-        PVT.Rank = 1
+FROM dbo.Tiendas T
+INNER JOIN ProdVendTienda PVT MERGE PVT.tienda_id = T.id
+WHERE PVT.Rank = 1
