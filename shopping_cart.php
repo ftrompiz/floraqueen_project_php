@@ -13,9 +13,10 @@ abstract class Product
 
 class ProductA extends Product
 {
+    const PRODUCT_PRICE = 10;
     public function __construct()
     {
-        $this->price = 10;
+        $this->price = self::PRODUCT_PRICE;
     }
     public function getPrice(): float
     {
@@ -24,9 +25,10 @@ class ProductA extends Product
 }
 class ProductB extends Product
 {
+    const PRODUCT_PRICE = 8;
     public function __construct()
     {
-        $this->price = 8;
+        $this->price = self::PRODUCT_PRICE;
     }
     public function getPrice(): float
     {
@@ -35,11 +37,11 @@ class ProductB extends Product
 }
 class ProductC extends Product
 {
+    const PRODUCT_PRICE = 12;
     public function __construct()
     {
-        $this->price = 12;
+        $this->price = self::PRODUCT_PRICE;
     }
-
     public function getPrice(): float
     {
         return $this->price;
@@ -48,6 +50,10 @@ class ProductC extends Product
 
 class VoucherV extends Voucher
 {
+    const DISCOUNT_VALUE = 1;
+    const NO_DISCOUNT_VALUE = 0;
+    const PRODUCT_COUNT_DISCOUNT_CONDITION = 2;
+
     public function __construct()
     {
         $this->apply_at_end = false;
@@ -58,17 +64,18 @@ class VoucherV extends Voucher
         foreach ($cart->elements as $element){
             if ($element instanceof ProductA){
                 $count_product++;
-                if ($count_product >= 2){
-                    return 1;
+                if ($count_product >= self::PRODUCT_COUNT_DISCOUNT_CONDITION){
+                    return self::DISCOUNT_VALUE;
                 }
             }
         }
-        return 0;
+        return self::NO_DISCOUNT_VALUE;
     }
 }
 
 class VoucherR extends Voucher
 {
+    const DISCOUNT_VALUE = 5;
     public function __construct()
     {
         $this->apply_at_end = false;
@@ -82,7 +89,7 @@ class VoucherR extends Voucher
                 /**
                  * @var ProductB $product
                  */
-                $discount += 5;
+                $discount += self::DISCOUNT_VALUE;
             }
         }
         return $discount;
@@ -91,14 +98,17 @@ class VoucherR extends Voucher
 
 class VoucherS extends Voucher
 {
+    const DISCOUNT_APPLY_AFTER_TOTAL = 40;
+    const PERCENTAGE_DISCOUNT_ON_TOTAL = 5/100; // 5%
+
     public function __construct()
     {
         $this->apply_at_end = true;
     }
     public function getDiscount(Cart $cart):float
     {
-        if ($cart->total > 40){
-            return ($cart->total)*(.05);
+        if ($cart->total > self::DISCOUNT_APPLY_AFTER_TOTAL){
+            return ($cart->total)*(self::PERCENTAGE_DISCOUNT_ON_TOTAL);
         }
         return 0;
     }
@@ -133,11 +143,8 @@ class Cart{
         foreach ($this->elements as $element)
         {
             if ($element instanceof Product) {
-                /**
-                 * @var Product $element
-                 */
-                $pr = $element->getPrice();
-                $this->total += $pr;
+                $price = $element->getPrice();
+                $this->total += $price;
             } elseif ($element instanceof Voucher){
                 if ($element->apply_at_end){
                     array_push($list_voucher, $element);
@@ -151,9 +158,6 @@ class Cart{
         {
             if ($element instanceof Voucher)
             {
-                /**
-                 * @var Voucher $element
-                 */
                 $dis = $element->getDiscount($this);
                 $this->total -= $dis;
             }

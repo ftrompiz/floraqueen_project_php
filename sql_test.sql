@@ -1,11 +1,11 @@
 -- Creates y Inserts de prueba
 
-DROP TABLE CompraLineas;
-DROP TABLE Compras;
+DROP TABLE IF EXISTS CompraLineas;
+DROP TABLE IF EXISTS Compras;
 
-DROP TABLE Clientes;
-DROP TABLE Productos;
-DROP TABLE Tiendas;
+DROP TABLE IF EXISTS Clientes;
+DROP TABLE IF EXISTS Productos;
+DROP TABLE IF EXISTS Tiendas;
 
 CREATE TABLE Clientes(
     id INTEGER NOT NULL AUTO_INCREMENT,
@@ -75,21 +75,21 @@ INSERT INTO Tiendas( nombre, direccion) VALUES ('Media Market','Marina');
 INSERT INTO Tiendas( nombre, direccion) VALUES ('ING','Hospitaler');
 
 
-INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (1,1,300,'2021-10-10 01:26:09 AM');
+INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (1,1,300,'2022-02-10 01:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (1,1,1,300);
 
-INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (2,2,300,'2021-10-10 01:26:09 AM');
+INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (2,2,300,'2022-02-10 01:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (2,1,1,300);
 
-INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (2,1,850,'2021-10-26 05:26:09 AM');
+INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (2,1,850,'2022-02-26 05:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (3,3,1,400);
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (3,2,1,450);
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (3,3,1,400);
 
-INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (3,3,400,'2021-10-21 05:26:09 AM');
+INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (3,3,400,'2022-02-21 05:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (4,3,1,400);
 
-INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (3,2,700,'2021-10-24 01:26:09 AM');
+INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (3,2,700,'2022-02-24 01:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (5,3,1,400);
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (5,1,1,300);
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (5,1,2,300);
@@ -113,7 +113,7 @@ INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (9,3,
 INSERT INTO Compras( cliente_id, tienda_id, total, fecha) VALUES (2,1,900,'2021-08-31 01:26:09 AM');
 INSERT INTO CompraLineas( compra_id, producto_id, unidades, precio) VALUES (10,3,2,450);
 --
-A) -- Dado un id de cliente, necesitamos saber en qué tiendas ha comprado
+-- A) Dado un id de cliente, necesitamos saber en qué tiendas ha comprado
 SELECT DISTINCT(T.id), T.nombre, T.direccion
 FROM Clientes C
 INNER JOIN Compras CO ON  CO.cliente_id = C.id
@@ -121,12 +121,12 @@ INNER JOIN Tiendas T ON  CO.tienda_id = T.id
 WHERE C.id = 1;
 
 
-B) -- Dada una id de tienda, queremos ordenar las compras del último mes por total comprado
+-- B) Dada una id de tienda, queremos ordenar las compras del último mes por total comprado
 SELECT CO.tienda_id as TiendaId, CO.id as CompraId, CO.total, CO.fecha
 FROM Compras CO
 WHERE CO.fecha >= (NOW() - INTERVAL 1 MONTH)
 AND CO.tienda_id = 1
-ORDER BY CO.total DESC
+ORDER BY CO.total DESC;
 
 -- Si se desaea obtener la inforamcion de la tienda en la query
 SELECT T.id  as TiendaId, CO.id as CompraId, CO.total, CO.fecha
@@ -134,29 +134,29 @@ FROM Tiendas T
 INNER JOIN Compras CO ON  CO.tienda_id = T.id
 WHERE CO.fecha >= (NOW() - INTERVAL 1 MONTH)
 AND T.id = 1
-ORDER BY CO.total DESC
+ORDER BY CO.total DESC;
 
-C)-- Queremos saber en orden descendente las tiendas que más venden en número de ventas y total
+-- C) Queremos saber en orden descendente las tiendas que más venden en número de ventas y total
 SELECT CO.tienda_id as TiendaID, COUNT(CO.id) AS cantidad_ventas, SUM(CO.total) AS total_ventas
 FROM Compras CO
 GROUP BY CO.tienda_id
-ORDER BY total_ventas DESC,cantidad_ventas DESC
+ORDER BY total_ventas DESC,cantidad_ventas DESC;
 
 -- Si se desea tener la informacion de la tienda utilizar la query de abajo
 SELECT T.id as TiendaID, COUNT(CO.id) AS cantidad_ventas, SUM(CO.total) AS total_ventas
 FROM Compras CO
 INNER JOIN Tiendas T ON  T.id = CO.tienda_id
 GROUP BY CO.tienda_id
-ORDER BY cantidad_ventas DESC, total_ventas DESC
+ORDER BY cantidad_ventas DESC, total_ventas DESC;
 
-D) -- Queremos saber en qué tiendas compra la gente de un código postal en concreto
+-- D) Queremos saber en qué tiendas compra la gente de un código postal en concreto
 SELECT DISTINCT(T.id), T.nombre, T.direccion
 FROM Tiendas T
 INNER JOIN Compras CO ON  CO.tienda_id = T.id
 INNER JOIN Clientes CL ON  CO.cliente_id = CL.id
-WHERE CL.codigo_postal = '08023'
+WHERE CL.codigo_postal = '08023';
 
-E) -- Queremos saber cuál es el producto que más se compra en cada tienda
+-- E) Queremos saber cuál es el producto que más se compra en cada tienda
 SELECT T.id, T.nombre, PVT.producto_id, PVT.cantidad
 FROM Tiendas T
 INNER JOIN (
@@ -166,4 +166,4 @@ INNER JOIN (
     INNER JOIN CompraLineas COL ON COL.compra_id = CO.id
     GROUP BY COL.producto_id, CO.tienda_id
 ) PVT ON PVT.tienda_id = T.id
-WHERE PVT.Rank = 1
+WHERE PVT.Rank = 1;
